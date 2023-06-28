@@ -5,8 +5,8 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --open-mode=truncate
 
-WORKFLOW="/user/data/gent/shared/000/gvo00027/23_StijnVandermeulen/Pipeline_Prototype/CR_pipeline.nf"
-CONFIG="/user/data/gent/shared/000/gvo00027/23_StijnVandermeulen/Pipeline_Prototype/nextflow.config"
+WORKFLOW="/data/gent/gvo000/gvo00027/PPOL/resources/sharedData/CUTandRUN_BDC_SLB/Scripts/Scripts_SLB/CR_pipeline.nf"
+CONFIG="/data/gent/gvo000/gvo00027/PPOL/resources/sharedData/CUTandRUN_BDC_SLB/Scripts/Scripts_SLB/nextflow.config"
 
 module purge
 module load Nextflow
