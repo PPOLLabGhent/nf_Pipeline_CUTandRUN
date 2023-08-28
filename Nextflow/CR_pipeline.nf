@@ -105,8 +105,8 @@ process MapFiles {
   HGIndex=params.HGIndex[task.process]
   """
   module purge
-  module load SAMtools
-  module load Bowtie2
+  module load Bowtie2/2.4.5-GCC-11.3.0 
+  module load SAMtools/1.16.1-GCC-11.3.0
 
   basename="$workingDirName"
 
