@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem 4G
-#SBATCH -t 12:00:00
+#SBATCH -t 24:00:00
 #SBATCH --ntasks=1
 #SBATCH --mail-type=FAIL
 #SBATCH --open-mode=truncate
