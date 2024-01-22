@@ -15,8 +15,9 @@ These 4 files should be all you need to use this relatively simple pipeline that
 4. Evaluating the data 
 5. Conditionally deduplicating the data 
 6. Filtering the data using BEDtools 
-7. Creating subdata by splitting at a configurable sequence length                                                                                       # Note: The following section (7) is outdated but has been retained for historical reasons.
-                                                                                                                                                         # Future updates may involve replacing this part of the pipeline with more modern techniques.
+7. Creating subdata by splitting at a configurable sequence length
+     # Note: This part of the pipeline is outdated but has been retained for historical reasons.
+     # Future updates may involve replacing this part of the pipeline with more modern techniques.
 9. Creating IGV files based on the data 
 10. Performing RPKM normalization on the data 
 11. Performing specifiable peakcalling on the data according to a configurable csv file 
