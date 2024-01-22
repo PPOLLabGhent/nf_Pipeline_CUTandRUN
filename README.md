@@ -15,13 +15,14 @@ These 4 files should be all you need to use this relatively simple pipeline that
 4. Evaluating the data 
 5. Conditionally deduplicating the data 
 6. Filtering the data using BEDtools 
-7. Creating subdata by splitting at a configurable sequence length 
-8. Creating IGV files based on the data 
-9. Performing RPKM normalization on the data 
-10. Performing specifiable peakcalling on the data according to a configurable csv file 
-11. Annotating the narrow peak data using Homer 
-12. Finding motifs in the narrow peak data using Homer
-13. Summarising the run in a simple MultiQC
+7. Creating subdata by splitting at a configurable sequence length                                                                                       # Note: The following section (7) is outdated but has been retained for historical reasons.
+                                                                                                                                                         # Future updates may involve replacing this part of the pipeline with more modern techniques.
+9. Creating IGV files based on the data 
+10. Performing RPKM normalization on the data 
+11. Performing specifiable peakcalling on the data according to a configurable csv file 
+12. Annotating the narrow peak data using Homer 
+13. Finding motifs in the narrow peak data using Homer
+14. Summarising the run in a simple MultiQC
 
 Since Nextflow is capable of asynchronous jobhandling it will submit these jobs whenever the required inputs are supplied.  
 This means it can perform various tasks at the same time, as well as flexibly run multiple samples at the same time.
