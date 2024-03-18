@@ -122,6 +122,19 @@ process MapFiles {
 
   samtools view -b -q 30 \${basename}_Hs_sorted_${refgenome}.bam > \${basename}_Hs_sorted.MAPQ30.${refgenome}.bam
   samtools index -@ $big_task_cpus \${basename}_Hs_sorted.MAPQ30.${refgenome}.bam
+
+  # Mapping to E.coli for the spike in normalisation 
+  cmd="(bowtie2 -p $big_task_cpus --local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -X 700 -x $EcoliIndex -1 $trimmedfile1 -2 $trimmedfile2 | samtools sort -m 5G -T tmpfiles -O bam -@ $big_task_cpus -o \${basename}_Hs_sorted_Ecoli.bam) 3>&1 1>&2 2>&3 | tee \${basename}_Hs_mappingstder_Ecoli.out"
+  eval \${cmd}
+
+  samtools index -@ $big_task_cpus \${basename}_Hs_sorted_Ecoli.bam
+
+  samtools stats \${basename}_Hs_sorted_Ecoli.bam > \${basename}.samtoolstats.Hs.Ecoli.log
+  samtools flagstat \${basename}_Hs_sorted_Ecoli.bam > \${basename}.flagstat.Ecoli.log
+
+  samtools view -b -q 30 \${basename}_Hs_sorted_Ecoli.bam > \${basename}_Hs_sorted.MAPQ30.Ecoli.bam
+  samtools index -@ $big_task_cpus \${basename}_Hs_sorted.MAPQ30.Ecoli.bam
+
   """
 }
 
