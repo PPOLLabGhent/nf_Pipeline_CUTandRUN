@@ -71,6 +71,7 @@ process TrimFiles {
   """
   module purge
   module load Trim_Galore
+
   cd $workingDir
   file1="demultiplexed_reads/*R1*.fastq.gz"
   file2="demultiplexed_reads/*R2*.fastq.gz"
@@ -105,8 +106,8 @@ process MapFiles {
   HGIndex=params.HGIndex[task.process]
   """
   module purge
-  module load Bowtie2/2.4.5-GCC-11.3.0 
-  module load SAMtools/1.16.1-GCC-11.3.0
+  module load SAMtools/1.19.2-GCC-13.2.0
+  module load Bowtie2/2.5.4-GCC-13.2.0
 
   basename="$workingDirName"
 
@@ -122,6 +123,7 @@ process MapFiles {
 
   samtools view -b -q 30 \${basename}_Hs_sorted_${refgenome}.bam > \${basename}_Hs_sorted.MAPQ30.${refgenome}.bam
   samtools index -@ $big_task_cpus \${basename}_Hs_sorted.MAPQ30.${refgenome}.bam
+
   """
 }
 
@@ -144,6 +146,7 @@ process MultiQC {
   path "${workingDirName}_${refgenome}_multiQC_data"
   val workingDirName, emit: workingDirName
   env duppercent, emit: Dedup_percent
+
   script:
   """
   module purge
@@ -151,9 +154,10 @@ process MultiQC {
 
   basename=$workingDirName
   
-  multiqc -f . -n \${basename}_${refgenome}_multiQC
+  multiqc -f . --no-clean-up -n \${basename}_${refgenome}_multiQC
 
-  duppercent=\$(cut -f14 \${basename}_${refgenome}_multiQC_data/multiqc_general_stats.txt | sort -r | head -2 | tail -1)
+  duppercent=\$(cut -f14 \${basename}_${refgenome}_multiQC_data/multiqc_general_stats.txt | sort -r | head -2 | tail -1)  
+
   """
 }
 
@@ -332,6 +336,7 @@ process RPKM_normalizing {
 process IGV {
   publishDir "${params.resultsDir}/IGVfiles" , mode: 'move', overwrite: true
   label 'small_task'
+  errorStrategy 'ignore'
 
   input:
   path BlackfilteredBAMS
@@ -348,7 +353,8 @@ process IGV {
   basename=$BlackFilterBaseName
   
   module purge
-  module load IGV
+  module load Java/11.0.20
+  module load IGV/2.16.0-Java-11
 
   igvtools count \${basename}_blackfiltered_${refgenome}.bam \${basename}_blackfiltered_${refgenome}.tdf $IGVGenome
 
@@ -371,7 +377,6 @@ process PeakCalling {
   output:
   path "diff_peaks*"
   tuple env(peakDirName), path ("*.MAPQ30_keepdupauto_${refgenome}_chr_peaks.narrowPeak"), path ("*.MAPQ30.low120_keepdupauto_${refgenome}_chr_peaks.narrowPeak"), emit: PeakTuple, optional: true
-
   script:
   if (peakType == "narrowPeak")
   
@@ -451,7 +456,7 @@ process PeakCalling {
 }
 
 process Homer_findMotif {
-  publishDir "${params.resultsDir}/HomerMotifs/" , mode: 'move', overwrite: true
+  publishDir "${params.resultsDir}/HomerMotifs/${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput/${refgenome}" , mode: 'move', overwrite: true
   pod env: 'PATH', value: '$VSC_DATA_VO/PPOL/resources/repos/homer/bin:$PATH'
   errorStrategy 'finish'
   label 'big_task'
@@ -461,7 +466,7 @@ process Homer_findMotif {
   tuple val(refgenome),val(publish19),val(publish38)
   
   output:
-  path "${peakDirName}*"
+  path "MAPQ*"
 
   script:
   if (NormalPeakFile.size() > 0 && LowPeakFile.size() > 0)
@@ -471,12 +476,12 @@ process Homer_findMotif {
   module load Python
   
   #MAPQ30
-  mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30
-  findMotifsGenome.pl $NormalPeakFile $refgenome ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30/HomerErrorOut.txt
+  mkdir MAPQ30
+  findMotifsGenome.pl $NormalPeakFile $refgenome ./MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./MAPQ30/HomerErrorOut.txt
   
   #MAPQ30.low$FragSize
-  mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize
-  findMotifsGenome.pl $LowPeakFile $refgenome ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize -size $HomerSize -p $big_task_cpus 2> ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize/HomerErrorOut.txt
+  mkdir MAPQ30_low$FragSize
+  findMotifsGenome.pl $LowPeakFile $refgenome ./MAPQ30_low$FragSize -size $HomerSize -p $big_task_cpus 2> ./MAPQ30_low$FragSize/HomerErrorOut.txt
   
   rm -f */*.tmp
   """
@@ -487,12 +492,12 @@ process Homer_findMotif {
   module load Python
   
   #MAPQ30
-  mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30
-  findMotifsGenome.pl $NormalPeakFile $refgenome ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30/HomerErrorOut.txt
+  mkdir MAPQ30
+  findMotifsGenome.pl $NormalPeakFile $refgenome ./MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./MAPQ30/HomerErrorOut.txt
 
   #MAPQ30.low$FragSize
-  mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize
-  echo "$LowPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize/pipeline.err
+  mkdir MAPQ30_low$FragSize
+  echo "$LowPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > MAPQ30_low$FragSize/pipeline.err
   
   rm -f */*.tmp
   """
@@ -504,23 +509,23 @@ process Homer_findMotif {
   module load Python
   
   #MAPQ30.low$FragSize
-  mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize
-  findMotifsGenome.pl $LowPeakFile $refgenome ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize -size $HomerSize -p $big_task_cpus 2> ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize/HomerErrorOut.txt
+  mkdir MAPQ30_low$FragSize
+  findMotifsGenome.pl $LowPeakFile $refgenome ./MAPQ30_low$FragSize -size $HomerSize -p $big_task_cpus 2> ./MAPQ30_low$FragSize/HomerErrorOut.txt
 
   #MAPQ30
-  mkdir mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30
-  echo "$NormalPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30/pipeline.err
+  mkdir MAPQ30
+  echo "$NormalPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > MAPQ30/pipeline.err
   
   rm -f */*.tmp
   """
 
   else 
   """
-  mkdir mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30
-  echo "$NormalPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30/pipeline.err
+  mkdir MAPQ30
+  echo "$NormalPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > MAPQ30/pipeline.err
   
-  mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize
-  echo "$LowPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize/pipeline.err
+  mkdir MAPQ30_low$FragSize
+  echo "$LowPeakFile contained 0kb of data meaning no peaks were found during peakcalling" > MAPQ30_low$FragSize/pipeline.err
   
   """
 }
@@ -700,7 +705,7 @@ process summary_MultiQC {
 
     runname=$RunName
     
-    multiqc -f . -n \${runname}_multiQC
+    multiqc -f . --no-clean-up -n \${runname}_multiQC 
   """
 }
 
