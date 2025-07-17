@@ -1,0 +1,44 @@
+Bootstrap: docker
+From: continuumio/miniconda3
+
+%post
+    # Basis packages installeren
+    apt-get update && apt-get install -y curl wget unzip openjdk-11-jdk
+
+    # Conda channels instellen
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --add channels bioconda/label/cf201901
+
+    # Conda omgeving aanmaken en tools installeren
+    conda create -y -n nf-env \
+        python=3.10 \
+        bioconda::trim-galore \
+        bioconda::samtools=1.19.2 \
+        bioconda::bowtie2=2.5.4 \
+        bioconda::multiqc \
+        bioconda::picard \
+        bioconda::deeptools \
+        bioconda::bedtools \
+        conda-forge::openjdk=11 \
+        bioconda::macs2 \
+        bioconda::fastqc \
+        conda-forge::perl \
+        bioconda/label/cf201901::igvtools \
+        bioconda/label/cf201901::homer
+
+    # Conda activeren voor container sessies
+    echo "source /opt/conda/etc/profile.d/conda.sh" >> /environment
+    echo "conda activate nf-env" >> /environment
+
+%environment
+    source /opt/conda/etc/profile.d/conda.sh
+    conda activate nf-env
+
+%labels
+    Author SarahLeeBekaert
+    Version 1.0
+
+%runscript
+    exec "$@"

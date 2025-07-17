@@ -5,11 +5,11 @@
 #SBATCH --mail-type=FAIL
 #SBATCH --open-mode=truncate
 
-WORKFLOW="/data/gent/gvo000/gvo00027/PPOL/resources/sharedData/CUTandRUN_BDC_SLB/Scripts/Scripts_SLB/CR_pipeline.nf"
-CONFIG="/data/gent/gvo000/gvo00027/PPOL/resources/sharedData/CUTandRUN_BDC_SLB/Scripts/Scripts_SLB/nextflow.config"
+WORKFLOW="$VSC_DATA_VO/PPOL/resources/sharedData/CUTandRUN_BDC_SLB/Scripts/Scripts_SLB/CR_pipeline.nf"
+CONFIG="$VSC_DATA_VO/PPOL/resources/sharedData/CUTandRUN_BDC_SLB/Scripts/Scripts_SLB/nextflow.config"
 
 module purge
-module load Nextflow
+module load  Nextflow
 
 # $1 is the runname which should be the name of the input directory. 
 # This runname should be found at the end of your inputDir variable so path/to/inputDir/RunName
@@ -19,5 +19,5 @@ module load Nextflow
 
 # $3 is a reserved slot for any additional nextflow argument you may want to supply. 
 # Usually this will be -resume to restart the pipeline from it's last cached position.
-nextflow -C ${CONFIG} run ${WORKFLOW} --RunName $1 --pipelineMode ${2:-hg19} $3
+nextflow -C ${CONFIG} run ${WORKFLOW} --RunName $1 --pipelineMode ${2:-hg19} $3  -with-apptainer
 
