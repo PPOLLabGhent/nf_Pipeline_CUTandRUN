@@ -28,15 +28,15 @@ apptainer build CR_Nextflow_Pipeline_v1.2.sif Singularity.def
 This will generate the file CR_Nextflow_Pipeline_v1.2.sif in your $VSC_SCRATCH/Apptainer directory.
 
 
-This repository houses the required materials to run the CUT&RUN pipeline using the https://tower.nf/ webtool.
+**Scripts CUT&RUN**
 
-Alternatively you can acquire the files manually in the directory named Nextflow, which should contain the following: 
 - **C&R_pipeline.nf** : This is the effective pipeline, to be invoked by the launch script or manually using\"\$nextflow run C&R_pipeline.nf\". 
 - **Launch_C&R_pipeline.sh** : A very simple shell script that launches the pipeline using the SLURM SBATCH-method. 
 - **README.md** : A different README file with a quick start guide for basic manual usage of the pipeline. 
 - **nextflow.config** : The config file containing the necessary parameters for the pipeline to function, usually you will have to adapt this one to some extent.
 
-These 4 files should be all you need to use this relatively simple pipeline that performs the following steps: 
+**Workflow**
+
 1. Data organization and sample renaming based on a configurable csv file 
 2. Trimming of the data 
 3. Mapping of the data 
