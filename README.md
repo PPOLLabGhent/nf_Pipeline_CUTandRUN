@@ -1,6 +1,6 @@
 # CUT&RUN Nextflow Pipeline using Apptainer as a Container 
 
-## Building an Apptainer Container**
+## Building an Apptainer Container
 
 To create your Apptainer container from the definition file (Singularity.def), follow these steps on the UGent HPC system:
 
@@ -28,7 +28,7 @@ apptainer build CR_Nextflow_Pipeline_v1.2.sif Singularity.def
 This will generate the file CR_Nextflow_Pipeline_v1.2.sif in your $VSC_SCRATCH/Apptainer directory.
 
 
-**Scripts CUT&RUN**
+## Scripts CUT&RUN
 
 - **C&R_pipeline.nf** : This is the effective pipeline containing the next steps:
 - **Launch_C&R_pipeline.sh** : A very simple shell script that launches the pipeline using the SLURM SBATCH-method. 
@@ -40,13 +40,13 @@ This will generate the file CR_Nextflow_Pipeline_v1.2.sif in your $VSC_SCRATCH/A
 Making use of the Cut and Run pipeline requires 3 inputs and some minor setup.
 
 **The inputs:** 
-- the fastq archives with name-format DNAXXX\_ where XXX is any amount of numbers followed by an underscore. e.g.:
+- The fastq archives with name-format DNAXXX\_ where XXX is any amount of numbers followed by an underscore. e.g.:
 > DNA096174_S3_R1_001.fastq.gz  
 > DNA096174_S3_R2_001.fastq.gz
 
 These should always come in pairs where the R1 and R2 are the differentiating element.
 
-- a samplesheet file in samplesheet_[RunName].csv format using semicolons (';') as delimiters. This file should countain two columns and the exact header shown below: 
+- A samplesheet file in samplesheet_[RunName].csv format using semicolons (';') as delimiters. This file should countain two columns and the exact header shown below: 
 1. first column = DNA name of the file 
 2. second column = CR name of the file the pipeline will identify the filepairs based on the DNA name and transform these into the CR names.  
   Example of file below:
@@ -56,7 +56,7 @@ These should always come in pairs where the R1 and R2 are the differentiating el
 > DNA096179;CR657_IMR32_BRCA  
 > DNA096203;CR681_IMR32_H3K4me3_etoposide0.1uM
 
-- a peakcalling file in peakcalling_[RunName].csv format delimited by semicolons (';') and use the headers as shown below. This file should countain three columns: 
+- A peakcalling file in peakcalling_[RunName].csv format delimited by semicolons (';') and use the headers as shown below. This file should countain three columns: 
 1. first column = the CR name of the control sample 
 2. second column = the CR name of the target sample 
 3. third column = the type of peakcalling that needs to be performed
@@ -71,11 +71,13 @@ These should always come in pairs where the R1 and R2 are the differentiating el
 **The configuration:**
 - Some modifications to the nextflow.config file will be required:
   
-  1. Edit the container path under the ```r Process Configuration```
+  1. Edit the container path under the ```Process Configuration```
+     
   ```r
   container = "/scratch/gent/436/vsc43612/Apptainer/CR_Nextflow_Pipeline_v1.2.sif"
    ```
-  2. Updating/confirming the input path, data path, results path, pipelineMode and links to all reference genomes in the ```r MAIN PARAMETERS``` section
+  
+  2. Updating/confirming the input path, data path, results path, pipelineMode and links to all reference genomes in the ``` MAIN PARAMETERS``` section
 
 - Open the 'Launch_CR_pipeline.sh' script and change the pathways for the WORKFLOW and CONFIG variables to match those of of the pipeline.nf file and .config file.
 
