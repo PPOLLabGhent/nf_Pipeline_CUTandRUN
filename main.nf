@@ -69,8 +69,6 @@ process TrimFiles {
 
   script:
   """
-  module purge
-  module load Trim_Galore
   cd $workingDir
   file1="demultiplexed_reads/*R1*.fastq.gz"
   file2="demultiplexed_reads/*R2*.fastq.gz"
@@ -104,10 +102,6 @@ process MapFiles {
   script:
   HGIndex=params.HGIndex[task.process]
   """
-  module purge
-  module load SAMtools/1.16.1-GCC-11.3.0
-  module load Bowtie2/2.4.5-GCC-11.3.0
-
   basename="$workingDirName"
 
   mkdir -p tmpfiles
@@ -122,18 +116,6 @@ process MapFiles {
 
   samtools view -b -q 30 \${basename}_Hs_sorted_${refgenome}.bam > \${basename}_Hs_sorted.MAPQ30.${refgenome}.bam
   samtools index -@ $big_task_cpus \${basename}_Hs_sorted.MAPQ30.${refgenome}.bam
-
-  # Mapping to E.coli for the spike in normalisation 
-  cmd="(bowtie2 -p $big_task_cpus --local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -X 700 -x $VSC_DATA_VO/PPOL/resources/ensembl/Escherichia_coli_K_12_DH10B/Ensembl/EB1/Sequence/Bowtie2Index/genome -1 $trimmedfile1 -2 $trimmedfile2 | samtools sort -m 5G -T tmpfiles -O bam -@ $big_task_cpus -o \${basename}_Hs_sorted_Ecoli.bam) 3>&1 1>&2 2>&3 | tee \${basename}_Hs_mappingstder_Ecoli.out"
-  eval \${cmd}
-
-  samtools index -@ $big_task_cpus \${basename}_Hs_sorted_Ecoli.bam
-
-  samtools stats \${basename}_Hs_sorted_Ecoli.bam > \${basename}.samtoolstats.Hs.Ecoli.log
-  samtools flagstat \${basename}_Hs_sorted_Ecoli.bam > \${basename}.flagstat.Ecoli.log
-
-  samtools view -b -q 30 \${basename}_Hs_sorted_Ecoli.bam > \${basename}_Hs_sorted.MAPQ30.Ecoli.bam
-  samtools index -@ $big_task_cpus \${basename}_Hs_sorted.MAPQ30.Ecoli.bam
 
   """
 }
@@ -157,16 +139,15 @@ process MultiQC {
   path "${workingDirName}_${refgenome}_multiQC_data"
   val workingDirName, emit: workingDirName
   env duppercent, emit: Dedup_percent
+
   script:
   """
-  module purge
-  module load MultiQC
-
   basename=$workingDirName
   
-  multiqc -f . -n \${basename}_${refgenome}_multiQC
+  multiqc -f . --no-clean-up -n \${basename}_${refgenome}_multiQC
 
-  duppercent=\$(cut -f14 \${basename}_${refgenome}_multiQC_data/multiqc_general_stats.txt | sort -r | head -2 | tail -1)
+  duppercent=\$(cut -f14 \${basename}_${refgenome}_multiQC_data/multiqc_general_stats.txt | sort -r | head -2 | tail -1)  
+
   """
 }
 
@@ -194,13 +175,7 @@ process Dedup {
   basename=$workingDirName
   metrics=\${basename}_dedup_metrics_${refgenome}.txt
   
-  module purge
-  module load picard
-
   java -jar \$EBROOTPICARD/picard.jar MarkDuplicates I="./\${basename}_Hs_sorted_${refgenome}.bam" O="./\${basename}_Hs_sorted_dedup_${refgenome}.bam" M="./\${metrics}" VALIDATION_STRINGENCY=SILENT OPTICAL_DUPLICATE_PIXEL_DISTANCE=12000 REMOVE_DUPLICATES=true
-
-  module purge
-  module load SAMtools
 
   #indexeren
   samtools index -@ $big_task_cpus \${basename}_Hs_sorted_dedup_${refgenome}.bam
@@ -254,9 +229,6 @@ process SplitFragments {
   filename=$postDedupMAPQ30BAM
   basename=\${filename%%.${refgenome}.bam}
   
-  module purge
-  module load SAMtools
-
   samtools view -h \$filename | \
     awk -v LEN=$FragSize '{if (\$9 <= LEN && \$9 >= -(LEN) && \$9 != 0 || \$1 ~ /^@/) print \$0}' | \
     samtools view -bh - > \${basename}.low${FragSize}.${refgenome}.bam
@@ -266,9 +238,6 @@ process SplitFragments {
     awk -v LEN=$FragSize '{if (\$9 >= LEN && \$9 <= 1000 && \$9 != 0 || \$1 ~ /^@/) print \$0}' | \
     samtools view -bh - > \${basename}.high${FragSize}.${refgenome}.bam
   samtools index \${basename}.high${FragSize}.${refgenome}.bam;
-
-  module purge
-  module load deepTools
 
   bamPEFragmentSize -b \$filename -hist Fragmentsize_\${basename}.${refgenome}.png -T "Fragment size of PE seq data"
 
@@ -300,14 +269,11 @@ process BlackFiltering {
   filename=$postDedupMAPQ30BAM
   basename=\${filename%%.${refgenome}.bam}
   echo \$basename
-  module purge
-  module load BEDTools
+
   bedtools intersect -v -a $postDedupMAPQ30BAM -b $BlackFilterPath > \${basename}_blackfiltered_${refgenome}.bam
   bedtools intersect -v -a $SmallFragBAM -b $BlackFilterPath > \${basename}.low120_blackfiltered_${refgenome}.bam
   bedtools intersect -v -a $LargeFragBAM -b $BlackFilterPath > \${basename}.high120_blackfiltered_${refgenome}.bam
 
-  module purge
-  module load SAMtools
   # Index last filtered file
   samtools index \${basename}_blackfiltered_${refgenome}.bam
   samtools index \${basename}.low120_blackfiltered_${refgenome}.bam
@@ -333,8 +299,6 @@ process RPKM_normalizing {
   """
   basename=$BlackFilterBaseName
   
-  module purge
-  module load deepTools
   bamCoverage -p $big_task_cpus -b \${basename}_blackfiltered_${refgenome}.bam --binSize 10 --normalizeUsing RPKM -of bigwig -o \${basename}_blackfiltered_${refgenome}.bw
   bamCoverage -p $big_task_cpus -b \${basename}.low120_blackfiltered_${refgenome}.bam --binSize 10 --normalizeUsing RPKM -of bigwig -o \${basename}.low120_blackfiltered_${refgenome}.bw
   bamCoverage -p $big_task_cpus -b \${basename}.high120_blackfiltered_${refgenome}.bam --binSize 10 --normalizeUsing RPKM -of bigwig -o \${basename}.high120_blackfiltered_${refgenome}.bw
@@ -343,25 +307,22 @@ process RPKM_normalizing {
 }
 
 process IGV {
-  publishDir "${params.resultsDir}/IGVfiles" , mode: 'move', overwrite: true
+  publishDir "${params.resultsDir}/IGVfiles", mode: 'move', overwrite: true
   label 'small_task'
 
   input:
   path BlackfilteredBAMS
   val BlackFilterBaseName
   path BlackfilteredBAIS
-  tuple val(refgenome),val(publish19),val(publish38)
+  tuple val(refgenome), val(publish19), val(publish38)
 
   output:
   path "*.tdf"
-  
+
   script:
   IGVGenome=params.IGVGenome[task.process]
   """
   basename=$BlackFilterBaseName
-  
-  module purge
-  module load IGV
 
   igvtools count \${basename}_blackfiltered_${refgenome}.bam \${basename}_blackfiltered_${refgenome}.tdf $IGVGenome
 
@@ -388,9 +349,6 @@ process PeakCalling {
   if (peakType == "narrowPeak")
   
   """
-  module purge
-  module load MACS2
-
   bashcontrol="${Control}*.MAPQ30_blackfiltered_${refgenome}.bam"
   smallfragcontrol="${Control}*.MAPQ30.low120_blackfiltered_${refgenome}.bam"
 
@@ -427,9 +385,6 @@ process PeakCalling {
   """
   else if (peakType == "broadPeak")
   """
-  module purge
-  module load MACS2
-
   bashcontrol="${Control}*.MAPQ30_blackfiltered_${refgenome}.bam"
   largefragcontrol="${Control}*.MAPQ30.high120_blackfiltered_${refgenome}.bam"
 
@@ -478,10 +433,7 @@ process Homer_findMotif {
   script:
   if (NormalPeakFile.size() > 0 && LowPeakFile.size() > 0)
   """
-  
-  module purge
-  module load Python
-  
+
   #MAPQ30
   mkdir MAPQ30
   findMotifsGenome.pl $NormalPeakFile $refgenome ./MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./MAPQ30/HomerErrorOut.txt
@@ -494,10 +446,7 @@ process Homer_findMotif {
   """
   else if (NormalPeakFile.size() > 0)
   """
-  
-  module purge
-  module load Python
-  
+    
   #MAPQ30
   mkdir MAPQ30
   findMotifsGenome.pl $NormalPeakFile $refgenome ./MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./MAPQ30/HomerErrorOut.txt
@@ -511,10 +460,7 @@ process Homer_findMotif {
 
   else if (LowPeakFile.size() > 0)
   """
-  
-  module purge
-  module load Python
-  
+    
   #MAPQ30.low$FragSize
   mkdir MAPQ30_low$FragSize
   findMotifsGenome.pl $LowPeakFile $refgenome ./MAPQ30_low$FragSize -size $HomerSize -p $big_task_cpus 2> ./MAPQ30_low$FragSize/HomerErrorOut.txt
@@ -559,8 +505,6 @@ process Homer_annotatePeaks {
   
   PATH=\$PATH:/user/data/gent/gvo000/gvo00027/PPOL/resources/repos/homer/.//bin/
 
-  module purge 
-  module load Perl
   
   #MAPQ30
   annotatePeaks.pl $NormalPeakFile $refgenome -genomeOntology \${outfilename}_genomeontology/ > \${outfilename}_annotation.txt 2> \${outfilename}_err.txt
@@ -589,9 +533,6 @@ process Homer_annotatePeaks {
   outfilename=\${inputname%%_peaks.narrowPeak}
   
   PATH=\$PATH:/user/data/gent/gvo000/gvo00027/PPOL/resources/repos/homer/.//bin/
-
-  module purge 
-  module load Perl
   
   #MAPQ30
   annotatePeaks.pl $NormalPeakFile $refgenome -genomeOntology \${outfilename}_genomeontology/ > \${outfilename}_annotation.txt 2> \${outfilename}_err.txt
@@ -616,9 +557,6 @@ process Homer_annotatePeaks {
   outfilename=\${inputname%%_peaks.narrowPeak}
   
   PATH=\$PATH:/user/data/gent/gvo000/gvo00027/PPOL/resources/repos/homer/.//bin/
-
-  module purge 
-  module load Perl
   
   #MAPQ30_low$FragSize
   annotatePeaks.pl $LowPeakFile $refgenome -genomeOntology \${outfilename}_genomeontology/ > \${outfilename}_annotation.txt 2> \${outfilename}_err.txt
@@ -691,9 +629,7 @@ process summary_MultiQC {
 
   script:
   """
-    module purge
-    module load SAMtools
-
+  
     rm *{low,high}$FragSize*.bam
 
     for bamfile in *.bam; do
@@ -702,17 +638,12 @@ process summary_MultiQC {
     samtools flagstat \$bamfile > \${basename}.flagstat.log
     done;
 
-    module purge
-    module load FastQC
-
     fastqc -t $big_task_cpus $BamCollection
 
-    module purge
-    module load MultiQC
 
     runname=$RunName
     
-    multiqc -f . -n \${runname}_multiQC
+    multiqc -f . -n \${runname}_multiQC 
   """
 }
 
