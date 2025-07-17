@@ -19,4 +19,4 @@ module load Nextflow/23.04.2
 
 # $3 is a reserved slot for any additional nextflow argument you may want to supply.
 # Usually this will be -resume to restart the pipeline from it's last cached position.
-nextflow -C ${CONFIG} run ${WORKFLOW} --RunName $1
+nextflow -C ${CONFIG} run ${WORKFLOW} --RunName $1 -with-apptainer
