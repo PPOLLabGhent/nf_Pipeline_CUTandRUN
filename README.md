@@ -86,7 +86,7 @@ These should always come in pairs where the R1 and R2 are the differentiating el
 
 The standard launch is performed using the following command with < RunName > being the name of the input directory and < pipelineMode > set to hg19/hg38/both:
 ```
-sbatch Launch_CR_pipeline.sh < RunName > < pipelineMode >
+sbatch Launch_CR_pipeline.sh < RunName > < pipelineMode >  -with-apptainer
 ```
 This will submit it to the SLURM job management system with the #SBATCH parameters at the top of the shell file.  
 If your HPC does not use SLURM you will probably have to adjust the parameters to match those of your particular job management system. The pipeline itself also submits each of it's processes via SLURM but changing this only requires the 'executor' parameter (found in the process section) to be updated in the config file.  
@@ -94,7 +94,7 @@ The nextflow documentation has a list of all compatible systems: https://www.nex
 
 Nextflow caches it's runs and allows users to resume from the last set of succesful processes using the '-resume' function. The launch script is compatible with this feature.
 ```
-sbatch Launch_CR_pipeline.sh < RunName > < pipelineMode > -resume 
+sbatch Launch_CR_pipeline.sh < RunName > < pipelineMode >  -with-apptainer -resume 
 ```
 *note: The launch script currently requests 24 hours of walltime. Depending on the amount of samples you're processing and the speed at which your HPC handles them you may need to adjust the walltime.*
 
