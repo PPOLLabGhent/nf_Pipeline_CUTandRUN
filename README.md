@@ -1,4 +1,30 @@
-# Introductory README for the CUT&RUNnextflow GitHub
+# README for the CUT&RUN Nextflow Pipeline using Apptainer as a Container 
+
+**Building an Apptainer Container**
+
+To create your Apptainer container from the definition file (Singularity.def), follow these steps on the UGent HPC system:
+
+1. Navigate to your scratch directory
+   The HPC environment only allows container builds in the scratch space:
+
+bash
+cd $VSC_SCRATCH
+
+2. Upload your definition file
+   Place your Singularity.def file in this location. You can create a dedicated subfolder (e.g., Apptainer) to keep things organized:
+
+bash
+mkdir -p Apptainer
+cd Apptainer
+
+3. Build the container
+Run the following command to build your container:
+
+bash
+apptainer build CR_Nextflow_Pipeline_v1.2.sif Singularity.def
+
+This will generate the file CR_Nextflow_Pipeline_v1.2.sif in your $VSC_SCRATCH/Apptainer directory.
+
 
 This repository houses the required materials to run the CUT&RUN pipeline using the https://tower.nf/ webtool.
 
