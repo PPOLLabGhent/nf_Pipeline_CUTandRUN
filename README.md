@@ -11,8 +11,7 @@ To create your Apptainer container from the definition file (Singularity.def), f
 cd $VSC_SCRATCH
 ```
 
-2. Upload your definition file
-   Place your Singularity.def file in this location. You can create a dedicated subfolder (e.g., Apptainer) to keep things organized:
+2. Place the Singularity.def file in this location. You can create a dedicated subfolder (e.g., Apptainer) to keep things organized:
 
 ```r
 mkdir -p Apptainer
