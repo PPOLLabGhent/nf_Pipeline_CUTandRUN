@@ -70,8 +70,6 @@ process TrimFiles {
 
   script:
   """
-  module purge
-  module load Trim_Galore
   cd $workingDir
   file1="demultiplexed_reads/*R1*.fastq.gz"
   file2="demultiplexed_reads/*R2*.fastq.gz"
@@ -102,10 +100,6 @@ process MapFiles {
   script:
   // remove because only one genome: Index=params.Index[task.process]
   """
-  module purge
-  module load Bowtie2/2.4.5-GCC-11.3.0
-  module load SAMtools/1.16.1-GCC-11.3.0
-
   basename="$workingDirName"
 
   mkdir -p tmpfiles
@@ -142,9 +136,6 @@ process MultiQC {
   env duppercent, emit: Dedup_percent
   script:
   """
-  module purge
-  module load MultiQC
-
   basename=$workingDirName
 
   multiqc -f . -n \${basename}_${refgenome}_multiQC
@@ -175,13 +166,7 @@ process Dedup {
   basename=$workingDirName
   metrics=\${basename}_dedup_metrics_${refgenome}.txt
 
-  module purge
-  module load picard
-
   java -jar \$EBROOTPICARD/picard.jar MarkDuplicates I="./\${basename}_Zf_sorted_${refgenome}.bam" O="./\${basename}_Zf_sorted_dedup_${refgenome}.bam" M="./\${metrics}" VALIDATION_STRINGENCY=SILENT OPTICAL_DUPLICATE_PIXEL_DISTANCE=12000 REMOVE_DUPLICATES=true
-
-  module purge
-  module load SAMtools
 
   #indexeren
   samtools index -@ $big_task_cpus \${basename}_Zf_sorted_dedup_${refgenome}.bam
@@ -232,9 +217,6 @@ process SplitFragments {
  filename=$postDedupMAPQ30BAM
  basename=\${filename%%.${refgenome}.bam}
 
- module purge
- module load SAMtools
-
  samtools view -h \$filename | \
    awk -v LEN=$FragSize '{if (\$9 <= LEN && \$9 >= -(LEN) && \$9 != 0 || \$1 ~ /^@/) print \$0}' | \
    samtools view -bh - > \${basename}.low${FragSize}.${refgenome}.bam
@@ -244,9 +226,6 @@ process SplitFragments {
    awk -v LEN=$FragSize '{if (\$9 >= LEN && \$9 <= 1000 && \$9 != 0 || \$1 ~ /^@/) print \$0}' | \
    samtools view -bh - > \${basename}.high${FragSize}.${refgenome}.bam
  samtools index \${basename}.high${FragSize}.${refgenome}.bam;
-
- module purge
- module load deepTools
 
  bamPEFragmentSize -b \$filename -hist Fragmentsize_\${basename}.${refgenome}.png -T "Fragment size of PE seq data"
 
@@ -280,8 +259,6 @@ process BlackFiltering {
   bedtools intersect -v -a $SmallFragBAM -b ${params.blackfilterZFpath} > \${basename}.low120_blackfiltered_${refgenome}.bam
   bedtools intersect -v -a $LargeFragBAM -b ${params.blackfilterZFpath} > \${basename}.high120_blackfiltered_${refgenome}.bam
 
-  module purge
-  module load SAMtools
   # Index last filtered file
   samtools index \${basename}_blackfiltered_${refgenome}.bam
   samtools index \${basename}.low120_blackfiltered_${refgenome}.bam
@@ -332,9 +309,6 @@ process IGV {
   """
   basename=$BlackFilterBaseName
 
-  module purge
-  module load IGV
-
   igvtools count \${basename}_blackfiltered_${refgenome}.bam \${basename}_blackfiltered_${refgenome}.tdf ${params.IGVZFGenome}
   igvtools count \${basename}.low120_blackfiltered_${refgenome}.bam \${basename}.low120_blackfiltered_${refgenome}.tdf ${params.IGVZFGenome}
   igvtools count \${basename}.high120_blackfiltered_${refgenome}.bam \${basename}.high120_blackfiltered_${refgenome}.tdf ${params.IGVZFGenome}
@@ -358,9 +332,6 @@ process PeakCalling {
   if (peakType == "narrowPeak")
 
   """
-  module purge
-  module load MACS2
-
   bashcontrol="${Control}*.MAPQ30_blackfiltered_${refgenome}.bam"
   smallfragcontrol="${Control}*.MAPQ30.low120_blackfiltered_${refgenome}.bam"
 
@@ -397,9 +368,6 @@ process PeakCalling {
   """
   else if (peakType == "broadPeak")
   """
-  module purge
-  module load MACS2
-
   bashcontrol="${Control}*.MAPQ30_blackfiltered_${refgenome}.bam"
   largefragcontrol="${Control}*.MAPQ30.high120_blackfiltered_${refgenome}.bam"
 
@@ -448,9 +416,6 @@ process Homer_findMotif {
   if (NormalPeakFile.size() > 0 && LowPeakFile.size() > 0)
   """
 
-  module purge
-  module load Python
-
   #MAPQ30
   mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30
   findMotifsGenome.pl $NormalPeakFile danRer11 ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30 -size $HomerSize -p $big_task_cpus 2> ./${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30/HomerErrorOut.txt
@@ -463,9 +428,6 @@ process Homer_findMotif {
   """
   else if (NormalPeakFile.size() > 0)
   """
-
-  module purge
-  module load Python
 
   #MAPQ30
   mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_MAPQ30
@@ -480,9 +442,6 @@ process Homer_findMotif {
 
   else if (LowPeakFile.size() > 0)
   """
-
-  module purge
-  module load Python
 
   #MAPQ30.low$FragSize
   mkdir ${peakDirName}_keepdupauto_size${HomerSize}_unmasked_motifoutput_${refgenome}_low$FragSize
@@ -525,11 +484,6 @@ process Homer_annotatePeaks {
   inputname=$NormalPeakFile
   outfilename=\${inputname%%_peaks.narrowPeak}
 
-  PATH=\$PATH:/user/data/gent/gvo000/gvo00027/PPOL/resources/repos/homer/.//bin/
-
-  module purge
-  module load Perl
-
   #MAPQ30
   annotatePeaks.pl $NormalPeakFile danRer11 -genomeOntology \${outfilename}_genomeontology/ > \${outfilename}_annotation.txt 2> \${outfilename}_err.txt
 
@@ -556,11 +510,7 @@ process Homer_annotatePeaks {
   inputname=$NormalPeakFile
   outfilename=\${inputname%%_peaks.narrowPeak}
 
-  PATH=\$PATH:/user/data/gent/gvo000/gvo00027/PPOL/resources/repos/homer/.//bin/
-
-  module purge
-  module load Perl
-
+ 
   #MAPQ30
   annotatePeaks.pl $NormalPeakFile danRer11 -genomeOntology \${outfilename}_genomeontology/ > \${outfilename}_annotation.txt 2> \${outfilename}_err.txt
 
@@ -582,11 +532,6 @@ process Homer_annotatePeaks {
   """
   inputname=$LowPeakFile
   outfilename=\${inputname%%_peaks.narrowPeak}
-
-  PATH=\$PATH:/user/data/gent/gvo000/gvo00027/PPOL/resources/repos/homer/.//bin/
-
-  module purge
-  module load Perl
 
   #MAPQ30_low$FragSize
   annotatePeaks.pl $LowPeakFile danRer11 -genomeOntology \${outfilename}_genomeontology/ > \${outfilename}_annotation.txt 2> \${outfilename}_err.txt
