@@ -69,16 +69,16 @@ These should always come in pairs where the R1 and R2 are the differentiating el
 *Declaring an old control or target that isn't currently running through the pipeline will break it.*
 
 **The configuration:**
-- Some modifications to the nextflow.config file will be required:
+- Some modifications to the **nextflow.config** file will be required:
   
-1. Edit the container path under the ```Process Configuration```
+1. Edit the container path under the ```PROCESS CONFIGURATIE```
 
      
   > container = "/scratch/gent/436/vsc43612/Apptainer/CR_Nextflow_Pipeline_v1.2.sif"
    
 2. Updating/confirming the input path, data path, results path, pipelineMode and links to all reference genomes in the ```MAIN PARAMETERS``` section
 
-- Open the 'Launch_CR_pipeline.sh' script and change the pathways for the WORKFLOW and CONFIG variables to match those of of the pipeline.nf file and .config file.
+- Open the **Launch_CR_pipeline.sh** script and change the pathways for the WORKFLOW and CONFIG variables to match those of of the pipeline.nf file and .config file.
 
 ***The pipeline is not clever enough to handle typo's. Check for spelling mistakes and capitalization.***
 
