@@ -17,8 +17,7 @@ mkdir -p Apptainer
 cd Apptainer
 ```
 
-3. Build the container
-Run the following command to build your container:
+3. Build the container. Run the following command to build your container:
 
 ```r
 apptainer build CR_Nextflow_Pipeline_v1.2.sif Singularity.def
