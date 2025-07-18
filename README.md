@@ -4,8 +4,7 @@
 
 To create your Apptainer container from the definition file (Singularity.def), follow these steps on the UGent HPC system:
 
-1. Navigate to your scratch directory
-   The HPC environment only allows container builds in the scratch space:
+1. Navigate to your scratch directory. The HPC environment only allows container builds in the scratch space:
 
 ```r
 cd $VSC_SCRATCH
